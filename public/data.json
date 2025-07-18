@@ -1,0 +1,18 @@
+
+
+
+
+
+
+{
+  "countries": [
+    {
+      "name": "India",
+      "states": ["Maharashtra", "Karnataka", "Delhi"]
+    },
+    {
+      "name": "United States",
+      "states": ["California", "Texas", "New York"]
+    }
+  ]
+}
