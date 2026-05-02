@@ -1,15 +1,6 @@
 
+import { redirect } from "next/navigation";
 
-
-
-
-const LandingPage = () => {
-   return (
-    
-    <>
-  hii from landing page
-    </>
-  );
-};
-
-export default LandingPage;
+export default function LandingPage() {
+  redirect("/Login");
+}

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { redirect } from "next/navigation"; // ✅ Import redirect
-import "./globals.css"; // ✅ Ensure this is imported
+import "./globals.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -21,10 +20,6 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  if (typeof window !== "undefined" && window.location.pathname === "/") {
-    redirect("/Login"); // ✅ Redirect to /Login
-  }
-
   return (
     <html lang="en">
       <body
