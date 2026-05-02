@@ -137,7 +137,83 @@ The ensemble generates a 14-day forecast using the full dataset (all 700 days fo
 
 ---
 
-## 7. The 5 Models
+## 7. Why Time Series? Why These Models?
+
+### 7.1 What is a Time Series Problem?
+
+AQI data is not random — **today's air quality is connected to yesterday's, last week's, and last month's**. This is called a time series problem. You cannot shuffle the data and train a normal model because order matters.
+
+Simple example:
+```
+Monday AQI = 180 (smog building up)
+Tuesday AQI = 210 (smog peak)
+Wednesday AQI = 190 (slight relief)
+```
+If you knew Monday was 180, you could guess Tuesday would be high. A time series model learns these patterns.
+
+**Why AQI is especially time-series-heavy:**
+- Pollution builds over multiple days (it does not reset every day)
+- Weekly patterns exist — weekday traffic vs. weekend
+- Yearly patterns exist — winter smog, summer dust, monsoon washout
+- Event spikes — Diwali, stubble burning — happen at known times every year
+
+---
+
+### 7.2 Why Not Just Use a Normal ML Model (like a simple regression)?
+
+A normal regression model would predict AQI from temperature, humidity etc. — but it has no memory. It cannot say "yesterday was bad, so today will probably also be bad." Time series models are specifically built to use **past values as inputs**, which is the most powerful signal for AQI.
+
+---
+
+### 7.3 Why These 4 Models — Simple Reason for Each
+
+| Model | Simple Reason for Choosing |
+|---|---|
+| **Naive Seasonal** | Needed as a "do nothing" baseline — if our ML cannot beat "just repeat last week," it is useless |
+| **Holt-Winters** | Best simple statistical model for data with weekly cycles — fast, reliable, no overfitting |
+| **Prophet** | Only model that can directly encode festival dates (Diwali) and burning seasons as hard constraints |
+| **XGBoost** | Learns complex non-linear patterns from 25+ features — strongest model when enough data exists |
+
+---
+
+### 7.4 How XGBoost is Made "Time-Series Aware"
+
+XGBoost by itself knows nothing about time. We make it time-aware by creating **lag features** — giving it past AQI values as input columns:
+
+```
+Input to XGBoost for predicting Day 731:
+  lag_1  = Day 730 AQI  (yesterday)
+  lag_7  = Day 724 AQI  (same day last week)
+  lag_14 = Day 717 AQI  (two weeks ago)
+  lag_30 = Day 701 AQI  (one month ago)
+  roll7_mean = average of last 7 days
+  is_winter_smog = 1 (if October–February)
+  ...
+```
+
+This is called **feature engineering for time series** — converting a time series problem into a standard supervised learning problem that XGBoost can solve.
+
+**Recursive forecasting** — for 14-day forecast:
+```
+Predict Day 1 → add to history → use as lag_1 for Day 2
+Predict Day 2 → add to history → use as lag_1 for Day 3
+... repeat 14 times
+```
+
+---
+
+### 7.5 Why Ensemble? Why Not Just Use XGBoost?
+
+Each model makes different kinds of errors:
+- XGBoost is great at **normal days** but can miss sudden level shifts
+- Holt-Winters is stable for **gradual trends** and weekly cycles
+- Prophet handles **festival spikes** that neither XGBoost nor HW expect
+
+Combining them cancels out individual mistakes. A weighted average where better models get higher weight (lower MAE = higher weight) consistently outperforms any single model.
+
+---
+
+## 8. The 5 Models
 
 ### Model 1: Naive Seasonal (Baseline)
 **What it does:** Takes the last 7 days and repeats them for the forecast period.
@@ -158,8 +234,11 @@ The ensemble generates a 14-day forecast using the full dataset (all 700 days fo
 - `changepoint_prior_scale=0.05` — conservative trend changes
 - `holidays_prior_scale=15.0` — strong weight on festival effects
 
-**Windows limitation:** Prophet requires CmdStan (C++ compiler). This does not compile on Windows without MinGW. On Render (Linux), Prophet runs natively. Locally on Windows, it falls back to Holt-Winters.
-**Typical MAE (on Render):** 20–38 AQI units
+**Why Prophet is ideal for Indian AQI time series:**
+Prophet treats AQI as a sum of interpretable components — the "festival effect" and "stubble burning effect" are modeled as separate additive terms. This is unlike XGBoost which learns these effects implicitly. Prophet makes the seasonal structure explicit and human-readable, which is valuable for a research paper.
+
+**Deployment note:** Prophet + CmdStanpy were removed from `requirements.txt` for Render deployment because CmdStan (Prophet's Stan backend) caused the build to hang during metadata preparation on the free tier. The code retains full Prophet logic with `_PROPHET_OK` flag — when Prophet is unavailable, its slot in the ensemble is filled by Holt-Winters automatically. To re-enable Prophet, add `cmdstanpy==1.2.4` and `prophet==1.1.5` back to requirements on a paid Render instance or a Linux server.
+**Typical MAE (when running):** 20–38 AQI units
 
 ### Model 4: XGBoost (Gradient Boosted Trees)
 **What it does:** A tree-based model that learns from 25+ engineered features.
@@ -188,7 +267,7 @@ The ensemble typically beats all individual models because their errors partiall
 
 ---
 
-## 8. XGBoost Feature Importance
+## 9. XGBoost Feature Importance
 
 The system returns the top 12 most important features (by XGBoost's built-in feature importance scores). These are visualized as a bar chart in the frontend.
 
@@ -204,7 +283,7 @@ This tells a story for the research paper: **recent history + Indian seasonal co
 
 ---
 
-## 9. Indian-Specific Domain Features — The Unique Contribution
+## 10. Indian-Specific Domain Features — The Unique Contribution
 
 This is what separates this work from generic AQI prediction papers:
 
@@ -228,7 +307,7 @@ Cold dense air near the surface traps pollutants underneath a warm inversion lay
 
 ---
 
-## 10. API Endpoints
+## 11. API Endpoints
 
 **Base URL (local):** `http://localhost:8000`
 **Base URL (Render):** `https://airsona-timeseries-api.onrender.com` *(after deployment)*
@@ -267,7 +346,7 @@ Health check: `{"status": "ok"}`
 
 ---
 
-## 11. Frontend — 5-Tab Interface
+## 12. Frontend — 5-Tab Interface
 
 The `app/time-series/page.tsx` was completely redesigned to consume the new API.
 
@@ -283,7 +362,7 @@ The `app/time-series/page.tsx` was completely redesigned to consume the new API.
 
 ---
 
-## 12. Deployment Guide
+## 13. Deployment Guide
 
 ### 12.1 Deploy Backend on Render
 
@@ -334,7 +413,7 @@ git push origin main
 
 ---
 
-## 13. Evaluation Metrics — What the Numbers Mean
+## 14. Evaluation Metrics — What the Numbers Mean
 
 | Metric | Formula | What It Means for AQI |
 |---|---|---|
@@ -355,7 +434,7 @@ git push origin main
 
 ---
 
-## 14. What Makes This Research-Grade?
+## 15. What Makes This Research-Grade?
 
 **Methodology strength:**
 - Temporal train/test split (not random — many papers get this wrong)
@@ -381,7 +460,7 @@ git push origin main
 
 ---
 
-## 15. File Structure
+## 16. File Structure
 
 ```
 Airsona/
@@ -413,19 +492,20 @@ Airsona/
 
 ---
 
-## 16. Known Limitations
+## 17. Known Limitations
 
 | Issue | Status |
 |---|---|
-| Prophet doesn't run on Windows (no MinGW/CmdStan) | Falls back to Holt-Winters locally; runs natively on Render (Linux) |
+| Prophet removed from deployment | Removed from `requirements.txt` to fix Render build hang. Code has full fallback to Holt-Winters (`_PROPHET_OK=False`). Re-enable on paid Render tier or Linux server. |
 | Render free tier cold starts | First request after 15min inactivity takes ~30–60s |
 | Data is CAMS reanalysis, not CPCB ground sensors | Must be disclosed in paper methodology |
 | No hyperparameter tuning for XGBoost | Fixed params (400 trees, lr=0.04, depth=5) — tuning could improve ~5–10% |
 | Single-city models | Each city runs independently — no transfer learning across cities |
+| XGBoost recursive error accumulation | Each step's prediction error feeds into the next step's lag features — error grows over 14 days |
 
 ---
 
-## 17. Quick Reference — AQI Categories
+## 18. Quick Reference — AQI Categories
 
 | AQI Range | Category | Color |
 |---|---|---|
