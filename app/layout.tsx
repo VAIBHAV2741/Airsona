@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { redirect } from "next/navigation";
 import "./globals.css";
 
 const inter = Inter({
@@ -16,10 +15,6 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  if (typeof window !== "undefined" && window.location.pathname === "/") {
-    redirect("/Login");
-  }
-
   return (
     <html lang="en">
       <body className={`${inter.variable} antialiased bg-black text-white`}>

@@ -14,10 +14,7 @@ const LandingPage = () => {
       <LandingChart/>
       <MarqueeStripe />
       <Footer/>
-
-
-      </div>
-     
+    </div>
   );
 };
 
