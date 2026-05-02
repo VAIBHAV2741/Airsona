@@ -16,15 +16,17 @@ const SetViewOnSearch = ({ center, zoom }: MapProps) => {
 
 const Map = ({ center, zoom }: MapProps) => {
   return (
-    <MapContainer
-      center={center}
-      zoom={zoom}
-      className="h-[300px] w-[300px] rounded-md shadow-md"
-      style={{ height: "300px", width: "100%" }}
-    >
-      <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-      <SetViewOnSearch center={center} zoom={zoom} />
-    </MapContainer>
+    <div className="w-full h-full">
+      <MapContainer
+        center={center}
+        zoom={zoom}
+        scrollWheelZoom
+        className="w-full h-full"
+      >
+        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+        <SetViewOnSearch center={center} zoom={zoom} />
+      </MapContainer>
+    </div>
   );
 };
 

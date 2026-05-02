@@ -1,16 +1,11 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { redirect } from "next/navigation"; // ✅ Import redirect
-import "./globals.css"; // ✅ Ensure this is imported
+import { Inter } from "next/font/google";
+import { redirect } from "next/navigation";
+import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
@@ -22,14 +17,12 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   if (typeof window !== "undefined" && window.location.pathname === "/") {
-    redirect("/Login"); // ✅ Redirect to /Login
+    redirect("/Login");
   }
 
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
-      >
+      <body className={`${inter.variable} antialiased bg-black text-white`}>
         {children}
       </body>
     </html>
