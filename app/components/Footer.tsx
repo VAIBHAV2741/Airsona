@@ -51,9 +51,46 @@ export default function AirsonaFooter() {
         ))}
       </div>
 
+      {/* Meet the Developers */}
+      <motion.div
+        className="mt-10 border-t border-gray-700 pt-8"
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        viewport={{ once: true }}
+      >
+        <h3 className="text-center text-xs font-semibold uppercase tracking-widest text-gray-400 mb-6">
+          Meet the Developers
+        </h3>
+        <div className="flex flex-wrap justify-center gap-6">
+          {[
+            { name: "Tarun Bhatia",   photo: "" },
+            { name: "Vaibhav Sharma", photo: "" },
+            { name: "Vamsh Suneja",   photo: "" },
+            { name: "Tanmay Pant",    photo: "" },
+            { name: "Uday Vimal",     photo: "" },
+          ].map(({ name, photo }) => (
+            <div key={name} className="flex flex-col items-center gap-2 group">
+              <div className="w-12 h-12 rounded-full border border-gray-700 group-hover:border-emerald-500 transition-colors overflow-hidden bg-gray-800 flex items-center justify-center">
+                {photo ? (
+                  <img src={photo} alt={name} className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-lg font-bold text-gray-400 group-hover:text-emerald-400 transition-colors">
+                    {name[0]}
+                  </span>
+                )}
+              </div>
+              <span className="text-xs text-gray-400 group-hover:text-white transition-colors text-center leading-tight">
+                {name}
+              </span>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Bottom copyright */}
       <motion.div
-        className="mt-10 border-t border-gray-700 pt-6 text-center text-xs text-gray-500"
+        className="mt-6 text-center text-xs text-gray-500"
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         transition={{ duration: 1 }}

@@ -65,7 +65,37 @@ export default function AboutPage() {
             </div>
           </div>
 
-          <div className="text-center pt-12">
+          {/* Meet the Developers */}
+          <div className="bg-[#131A2A] border border-slate-800 rounded-2xl p-8 md:p-12 shadow-2xl">
+            <h2 className="text-3xl font-bold text-white mb-2">Meet the Developers</h2>
+            <p className="text-slate-400 mb-8">The team behind Airsona.</p>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
+              {[
+                { name: "Tarun Bhatia",   photo: "" },
+                { name: "Vaibhav Sharma", photo: "" },
+                { name: "Vamsh Suneja",   photo: "" },
+                { name: "Tanmay Pant",    photo: "" },
+                { name: "Uday Vimal",     photo: "" },
+              ].map(({ name, photo }) => (
+                <div key={name} className="flex flex-col items-center gap-3 group">
+                  <div className="w-20 h-20 rounded-full border-2 border-slate-700 group-hover:border-emerald-500 transition-colors overflow-hidden bg-[#1A2235] flex items-center justify-center">
+                    {photo ? (
+                      <img src={photo} alt={name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-2xl font-bold text-slate-500 group-hover:text-emerald-400 transition-colors">
+                        {name[0]}
+                      </span>
+                    )}
+                  </div>
+                  <span className="text-sm font-medium text-slate-300 group-hover:text-white transition-colors text-center">
+                    {name}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-center pt-4">
             <Link href="/mainApp">
               <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-8 py-4 rounded-xl font-bold text-lg transition-colors shadow-lg shadow-emerald-900/20">
                 Lauch the Airsona UI Engine
