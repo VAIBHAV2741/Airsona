@@ -8,7 +8,6 @@ const navLinks = [
   { href: "/time-series", label: "Time Series" },
   { href: "/mainApp", label: "Check AQI" },
   { href: "/reduceaqi", label: "Reduce AQI" },
-  { href: "/dashboard", label: "Dashboard" },
   { href: "/engine", label: "Environment Engine" },
 ];
 

@@ -357,117 +357,228 @@ export default function ReductionPage() {
     []
   );
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-slate-950 to-black text-white font-[Inter]">
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 min-h-[80vh]">
+  const getAqiColorClasses = (aqi: number) => {
+    if (aqi <= 50) return "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+    if (aqi <= 100) return "bg-lime-500/10 text-lime-400 border border-lime-500/20";
+    if (aqi <= 200) return "bg-yellow-500/10 text-yellow-400 border border-yellow-500/20";
+    if (aqi <= 300) return "bg-orange-500/10 text-orange-400 border border-orange-500/20";
+    return "bg-red-500/10 text-red-400 border border-red-500/20";
+  };
 
-          {/* LEFT */}
-          <div className="flex flex-col justify-start gap-6">
-            <div>
-              <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                🌳 AQI Reduction
-                <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-blue-400">
-                  Tree Plantation Impact
-                </span>
-              </h1>
-              <p className="mt-3 text-slate-400">
-                Check AQI improvements by clicking <strong>Recommend Trees</strong>.
-              </p>
+  return (
+    <div className="min-h-screen bg-[#050505] text-white font-[Inter] font-light selection:bg-emerald-500/30">
+      <div className="max-w-[1400px] mx-auto p-4 sm:p-6 lg:p-8">
+        
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extralight tracking-tight text-white mb-2">
+              AQI <span className="font-medium text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">Reduction Model</span>
+            </h1>
+            <p className="text-slate-400 font-light max-w-xl text-sm md:text-base">
+              Simulate the environmental impact of targeted tree plantations. Select your tree group size and analyze predicted AQI improvements.
+            </p>
+          </div>
+          
+          {/* Controls */}
+          <div className="flex flex-wrap items-center gap-3">
+             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-5 py-2.5 text-sm text-emerald-400 flex items-center gap-2 shadow-sm">
+               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+               {locationInput || "Detecting Zone..."}
+             </div>
+             
+             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-full px-4 py-2 text-sm flex items-center gap-2 shadow-sm">
+               <span className="text-slate-400">Scale:</span>
+               <select
+                 value={selectedGroup}
+                 onChange={(e) => setSelectedGroup(Number(e.target.value))}
+                 className="bg-transparent text-white outline-none font-medium appearance-none cursor-pointer pr-2"
+               >
+                 {[25, 50, 100, 200, 500].map((n) => (
+                   <option key={n} value={n} className="bg-slate-900">{n} Trees</option>
+                 ))}
+               </select>
+             </div>
+
+             <button
+               onClick={handleRecommendTrees}
+               disabled={loading}
+               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-400 hover:to-cyan-400 text-black font-medium px-6 py-2.5 rounded-full transition-all flex items-center gap-2 shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+             >
+               {loading ? (
+                 <span className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+               ) : (
+                 <>✨ Simulate Impact</>
+               )}
+             </button>
+
+             {reportData && (
+               <DownloadReportButton 
+                 onDownload={handleDownloadReport} 
+                 disabled={!reportData} 
+               />
+             )}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+          
+          {/* Left Column: Data & Stats */}
+          <div className="xl:col-span-1 flex flex-col gap-6">
+            
+            {/* Quick Stats Grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col justify-between transition-all hover:bg-white/[0.04]">
+                <span className="text-slate-500 text-xs uppercase tracking-widest mb-3 font-medium">Current AQI</span>
+                <div className="text-4xl font-extralight text-white">
+                  {reportData ? reportData.currentAQI : stations.length ? Math.round(stations.reduce((a,b)=>a+b.ori,0)/stations.length) : "--"}
+                </div>
+              </div>
+              <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-2xl p-5 flex flex-col justify-between transition-all hover:bg-emerald-500/10">
+                <span className="text-emerald-500/70 text-xs uppercase tracking-widest mb-3 font-medium">Predicted AQI</span>
+                <div className="text-4xl font-medium text-emerald-400">
+                  {reportData ? reportData.predictedAQI : "--"}
+                </div>
+              </div>
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col justify-between transition-all hover:bg-white/[0.04]">
+                <span className="text-slate-500 text-xs uppercase tracking-widest mb-3 font-medium">Impact Score</span>
+                <div className="text-3xl font-extralight text-cyan-400">
+                  {reportData ? `${reportData.overallImpactScore}/100` : "--"}
+                </div>
+              </div>
+              <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex flex-col justify-between transition-all hover:bg-white/[0.04]">
+                <span className="text-slate-500 text-xs uppercase tracking-widest mb-3 font-medium">Carbon Offset</span>
+                <div className="text-xl font-extralight text-white mt-auto">
+                  {reportData ? `${reportData.estimatedCarbonReduction.toFixed(1)} tons/yr` : "--"}
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap gap-4 items-center">
-              <div className="bg-[#0d0f15] border border-emerald-500/30 rounded-2xl px-6 py-3 text-emerald-400 font-bold w-full sm:w-64 text-center select-none shadow-lg shadow-emerald-500/10">
-                Zone: {locationInput || "Detecting..."}
+            {/* Additional Engine Context */}
+            {reportData?.engineResults?.topRecommendations && reportData.engineResults.topRecommendations.length > 0 && (
+              <div className="bg-gradient-to-br from-cyan-500/10 to-emerald-500/10 border border-cyan-500/20 rounded-2xl p-5">
+                <h3 className="text-sm font-medium text-cyan-400 mb-3 flex items-center gap-2">
+                  <span>💡</span> AI Top Insight
+                </h3>
+                <p className="text-sm text-slate-300 font-light leading-relaxed">
+                  {reportData.engineResults.topRecommendations[0].solution}
+                </p>
+                <div className="mt-3 flex items-center gap-3 text-xs text-cyan-500/70">
+                  <span>Difficulty: {reportData.engineResults.topRecommendations[0].implementationDifficulty}</span>
+                  <span>•</span>
+                  <span>Impact: {reportData.engineResults.topRecommendations[0].estimatedImpact}</span>
+                </div>
               </div>
-              <select
-                value={selectedGroup}
-                onChange={(e) => setSelectedGroup(Number(e.target.value))}
-                className="bg-[#0d0f15] border border-slate-700 rounded-2xl px-4 py-3 text-white outline-none"
-              >
-                {[25, 50, 100, 200, 500].map((n) => (
-                  <option key={n} value={n}>{n} trees</option>
+            )}
+
+            {/* Tree Recommendations List */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-2xl p-5 flex-1 flex flex-col">
+              <h3 className="text-sm font-medium text-white mb-4 flex items-center justify-between">
+                Recommended Species
+                <span className="text-xs text-slate-500 font-light bg-white/5 px-2 py-1 rounded-md">{treeRecommendations.length} selected</span>
+              </h3>
+              {error && <p className="text-xs text-amber-400 mb-4 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">{error}</p>}
+              <div className="flex flex-col gap-3 overflow-y-auto pr-2 max-h-[250px] scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                {treeRecommendations.map((t, i) => (
+                  <div key={i} className="flex flex-col p-3 rounded-xl bg-white/[0.02] hover:bg-white/[0.05] transition-colors border border-white/5">
+                    <span className="font-medium text-white text-sm">{t.name}</span>
+                    {t.description && <span className="text-xs text-slate-400 font-light mt-1.5 leading-relaxed">{t.description}</span>}
+                  </div>
                 ))}
-              </select>
-              <button
-                onClick={handleRecommendTrees}
-                disabled={loading}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-semibold text-lg bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-400 hover:to-blue-400 disabled:opacity-60 transition"
-              >
-                {loading ? (
-                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>🌱 Recommend Trees</>
-                )}
-              </button>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Center/Right Column: Map & Station Data */}
+          <div className="xl:col-span-2 flex flex-col gap-6">
+            
+            {/* Map Container */}
+            <div className="relative w-full h-[450px] lg:h-[550px] rounded-3xl overflow-hidden border border-white/10 bg-[#0a0a0a] shadow-2xl">
+              <AQIMap center={center} mapPoints={mapPoints} />
+              
+              {/* Overlay Legend */}
+              <div className="absolute bottom-5 left-5 z-[400] bg-black/80 backdrop-blur-xl border border-white/10 p-4 rounded-2xl shadow-xl flex flex-col gap-3">
+                <span className="text-[10px] uppercase tracking-widest text-slate-400 font-medium">AQI Index</span>
+                <div className="flex items-center gap-4">
+                  {legend.map((l) => (
+                    <div key={l.color} className="flex items-center gap-2 group cursor-help">
+                      <span className="w-3 h-3 rounded-full shadow-sm ring-2 ring-white/10 group-hover:scale-125 transition-transform" style={{ background: l.color }} />
+                      <span className="text-xs text-slate-300 font-medium hidden sm:block">{l.label.split(' ')[0]}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Map Controls */}
               <button
                 onClick={() => regeneratePoints(80)}
-                className="px-4 py-3 rounded-2xl bg-white/6 hover:bg-white/10 transition"
+                className="absolute top-5 right-5 z-[400] bg-black/80 backdrop-blur-xl border border-white/10 p-2.5 rounded-xl text-white hover:bg-white/10 transition-all hover:scale-105 shadow-xl"
+                title="Regenerate Sensor Data"
               >
-                🔄 Regenerate Dots
+                🔄
               </button>
+            </div>
+
+            {/* Stations Data Table */}
+            <div className="bg-white/[0.02] border border-white/5 rounded-3xl p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-base font-medium text-white">Monitoring Stations</h3>
+                <span className="text-xs text-slate-500 font-light bg-white/5 px-3 py-1.5 rounded-full">{stations.length} active nodes</span>
+              </div>
               
-              <DownloadReportButton 
-                onDownload={handleDownloadReport} 
-                disabled={!reportData} 
-              />
-            </div>
-
-            {/* Stations */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-              <div className="bg-[#0d0f15] border border-slate-800 rounded-2xl p-4 max-h-44 overflow-y-auto">
-                <h3 className="text-sm font-semibold mb-3">Nearby Stations</h3>
-                {stations.map((s, i) => (
-                  <div key={i} className="bg-[#11131a] rounded-xl p-3 mb-2">
-                    <div className="flex justify-between items-center">
-                      <p className="font-medium truncate">{s.name}</p>
-                      <div className="text-xs text-slate-400">AQI {s.ori}</div>
-                    </div>
-                    <div className="mt-1 text-sm text-slate-400">
-                      Reduction: <span className="text-green-400 font-semibold">{s.red}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Recommended Trees */}
-              <div className="bg-[#0d0f15] border border-slate-800 rounded-2xl p-4 max-h-44 overflow-y-auto">
-                <h3 className="text-sm font-semibold mb-3">Recommended Trees</h3>
-                {error && <p className="text-xs text-amber-400 mb-2">{error}</p>}
-                {treeRecommendations.map((t, i) => (
-                  <div key={i} className="bg-[#11131a] rounded-xl p-3 mb-2">
-                    <p className="font-medium">{t.name}</p>
-                    {t.description && <p className="text-xs text-slate-400">{t.description}</p>}
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mt-4">
-              <h4 className="text-xs text-slate-400 mb-2">AQI Legend</h4>
-              <div className="flex flex-wrap gap-2 items-center">
-                {legend.map((l) => (
-                  <div key={l.color} className="flex items-center gap-2 bg-[#0d0f15] p-2 rounded-lg border border-slate-800">
-                    <span style={{ width: 14, height: 14, background: l.color, borderRadius: 6, display: "inline-block" }} />
-                    <span className="text-xs text-slate-300">{l.label}</span>
-                  </div>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse min-w-[600px]">
+                  <thead>
+                    <tr className="border-b border-white/10 text-xs text-slate-500 uppercase tracking-widest">
+                      <th className="pb-4 font-medium pl-4">Station Location</th>
+                      <th className="pb-4 font-medium">Original AQI</th>
+                      <th className="pb-4 font-medium">Est. Reduction</th>
+                      <th className="pb-4 font-medium pr-4 text-right">Projected AQI</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {stations.slice(0, 6).map((s, i) => {
+                      const projected = Math.round(s.ori * (1 - s.red / 100));
+                      return (
+                        <tr key={i} className="border-b border-white/[0.02] last:border-0 hover:bg-white/[0.02] transition-colors group">
+                          <td className="py-4 text-sm text-white font-light pl-4 flex items-center gap-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-slate-600 group-hover:bg-emerald-500 transition-colors"></span>
+                            {s.name}
+                          </td>
+                          <td className="py-4 text-sm">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${getAqiColorClasses(s.ori)}`}>
+                              {s.ori}
+                            </span>
+                          </td>
+                          <td className="py-4 text-sm text-emerald-400 font-medium flex items-center gap-1.5">
+                            <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6" />
+                            </svg>
+                            {s.red}%
+                          </td>
+                          <td className="py-4 text-sm text-white font-medium pr-4 text-right">
+                            <span className={`inline-flex items-center px-2.5 py-1 rounded-md text-xs font-medium ${getAqiColorClasses(projected)}`}>
+                              {projected}
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
               </div>
             </div>
+
           </div>
-
-          {/* RIGHT: MAP */}
-          <div className="w-full h-[420px] md:h-[540px] lg:h-[680px] rounded-3xl overflow-hidden border border-slate-800 shadow-2xl">
-            <AQIMap center={center} mapPoints={mapPoints} />
-          </div>
-
         </div>
+
       </div>
 
       {/* Hidden Report Document for PDF generation */}
       {reportData && (
-        <div style={{ position: "absolute", top: "-9999px", left: "-9999px" }}>
+        <div style={{ position: "absolute", top: "-9999px", left: "-9999px", pointerEvents: "none", opacity: 0 }}>
           <ReportDocument ref={reportRef} data={reportData} />
         </div>
       )}
